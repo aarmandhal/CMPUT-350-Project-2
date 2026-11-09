@@ -29,13 +29,6 @@ public:
                 continue;
             }
 
-            bool grounded = em.template HasComponent<CollisionComponent>(id) &&
-                            em.template GetComponent<CollisionComponent>(id).onGround;
-            if (grounded && movement.velocity.y >= 0) {
-                movement.velocity.y = 0;
-                continue;
-            }
-
             float mult =
                 (movement.velocity.y >= 0) ? kFallGravityMultiplier : kRiseGravityMultiplier;
             movement.velocity.x += mult * gravity.acceleration.x;

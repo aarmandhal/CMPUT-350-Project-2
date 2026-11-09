@@ -3,7 +3,10 @@
 #include <cassert>
 #include <iostream>
 #include <limits>
+#include <string>
+#include <tuple>
 #include <type_traits>
+#include <vector>
 
 #include "Component.h"
 #include "Entity.h"
@@ -16,18 +19,30 @@ public:
     class iterator {
     public:
         iterator(std::vector<Entity>* entities, std::vector<bool>* valid, size_t index)
-            : mEntities(entities), mValid(valid), mIndex(index) {}
-        iterator& operator++() { /* ... */
+            : mEntities(entities), mValid(valid), mIndex(index) {
+            SkipInvalid();
+        }
+        iterator& operator++() {
+            ++mIndex;
+            SkipInvalid();
             return *this;
         }
+
         Entity& operator*() const { return (*mEntities)[mIndex]; }
         bool operator!=(const iterator& other) const { return mIndex != other.mIndex; }
 
     private:
+        void SkipInvalid() {
+            while (mIndex < mValid->size() && !(*mValid)[mIndex]) ++mIndex;
+        }
+
         std::vector<Entity>* mEntities;
         std::vector<bool>* mValid;
         size_t mIndex;
     };
+
+    iterator begin() { return iterator(&mEntities, &mValid, 0); }
+    iterator end() { return iterator(&mEntities, &mValid, mEntities.size()); }
 
     static constexpr size_t kNullComponent = std::numeric_limits<size_t>::max();
     [[nodiscard]] EntityID CreateEntity(const std::string& name) {
@@ -38,7 +53,7 @@ public:
             mEntities[id] = Entity(id, name);
         } else {
             id = mEntities.size();
-            mEntities.emplace_back(id, name);
+            mEntities.push_back(Entity(id, name));
             mValid.push_back(false);
         }
         mValid[id] = true;
@@ -46,6 +61,10 @@ public:
     }
 
     void RemoveEntity(EntityID entity) {
+        if (entity >= mValid.size() || !mValid[entity]) {
+            return;
+        }
+
         mValid[entity] = false;
         mFreeList.push_back(entity);
         (InvalidateIfPresent<Components>(entity), ...);
@@ -61,7 +80,7 @@ public:
     void AddComponent(EntityID entity, T component) {
         auto& storage = GetComponentStorage<T>();
         if (entity >= storage.mStorage.size()) {
-            storage.mStorage.resize(entity + 1);
+            storage.mStorage.resize(entity + 1, component);
             storage.mValid.resize(entity + 1, false);
         }
         storage.mStorage[entity] = component;
@@ -87,6 +106,11 @@ public:
 
     template <typename T>
     ComponentStorage<T>& GetComponentStorage() {
+        return std::get<ComponentStorage<T>>(mComponentStorages);
+    }
+
+    template <typename T>
+    const ComponentStorage<T>& GetComponentStorage() const {
         return std::get<ComponentStorage<T>>(mComponentStorages);
     }
 
