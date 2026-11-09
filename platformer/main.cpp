@@ -60,6 +60,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
     std::getline(mapFile, line);
     std::istringstream firstLine(line);
 
+    // read the first line of the map file to determine the dictionary type
     firstLine >> word >> dictionaryType;
 
     // only the two supported map formats are valid
@@ -68,6 +69,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
         throw std::runtime_error("Invalid map dictionary");
     }
 
+    // read tile dictionary until the map header is reached
     while (std::getline(mapFile, line)) {
 
         if (line.empty()) {
@@ -79,16 +81,19 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
             break;
         }
 
+        // parse title dictionary line
         std::istringstream tileLine(line);
 
         char symbol;
         std::string textureFile;
         float x, y, width, height;
 
+        // read tile symbol, texture file and source rectangle from dictionay line
         tileLine >> symbol >> textureFile >> x >> y >> width >> height;
 
         ECSEngine::Rect sourceRect = {{x, y}, width, height};
 
+        // register tile texture with the sprite manager and get the ID
         auto spriteID = sprites.RegisterTexture(
             path + textureFile, sourceRect
         );
@@ -117,10 +122,11 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
     float originX, originY, tileWidth, tileHeight;
     int gridWidth, gridHeight;
 
-    mapSettings >> mapWord >> originWord >> originX >> originY
-                >> tileWord >> tileWidth >> tileHeight
-                >> sizeWord >> gridWidth >> gridHeight;
+    // read map settings from the map header line
+    mapSettings >> mapWord >> originWord >> originX >> originY >> tileWord >> tileWidth >> tileHeight >> sizeWord >> gridWidth >> gridHeight;
 
+    // validate map settings
+    // check whether the map settings from world and sky are valid before creating the map entities
     if (mapWord != "map" || originWord != "origin" ||
         tileWord != "tile" || sizeWord != "size" ||
         tileWidth <= 0 || tileHeight <= 0 ||
@@ -128,15 +134,18 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
         throw std::runtime_error("Invalid map settings");
     }
 
+    // loop responsible for converting the map file into entities with components
     for (int row = 0; row < gridHeight; row++) {
 
+        // read each row of the map and check its length
         if (!std::getline(mapFile, line) ||
             line.size() != static_cast<size_t>(gridWidth)) {
             throw std::runtime_error("Invalid map row");
         }
 
+        // loop through each column of the map
+        // processes each char in the current row
         for (int col = 0; col < gridWidth; col++) {
-
             char symbol = line[col];
 
             // empty tiles do not need entities
@@ -144,8 +153,8 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
                 continue;
             }
 
+            // find the tile info for the current symbol
             auto tile = dictionary.find(symbol);
-
             if (tile == dictionary.end()) {
                 throw std::runtime_error("Unknown map tile");
             }
@@ -154,21 +163,25 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
             float tileX = originX + col * tileWidth;
             float tileY = originY + row * tileHeight;
 
+            // create an ECS for the tile
             ECSEngine::EntityID id = entities.CreateEntity(std::string(1, symbol));
 
+            // give the tile a location component
             ECSEngine::LocationComponent location;
             location.loc = {tileX, tileY};
-
             entities.AddComponent(id, location);
 
+            // give the tile a sprite component
             ECSEngine::SpriteComponent sprite;
             sprite.textureID = tile->second.spriteID;
             sprite.bounds = {{0, 0}, tileWidth, tileHeight};
             sprite.worldSpace = true;
 
+            // add the sprite component to the entity
             entities.AddComponent(id, sprite);
 
             // background tiles have no collision components
+            // add collision component to the entity only if the tile has collision bounds
             if (tile->second.hasCollision) {
 
                 ECSEngine::CollisionComponent collision{};
@@ -177,7 +190,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
                 collision.doesDamage = false;
                 collision.collisionBox = tile->second.collisionBounds;
 
-                // preserve world space bounds for collision checks
+                // initialize the previous collision box in world coordinates for collision detection 
                 collision.previousCollisionBox = {
                     {tileX + collision.collisionBox.topLeft.x,
                      tileY + collision.collisionBox.topLeft.y},
@@ -188,7 +201,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
                 entities.AddComponent(id, collision);
             }
 
-            // spawner behavior is configured after the maps are loaded
+            // spawner behavior is added if the tile symbole is S
             if (symbol == 'S') {
 
                 ECSEngine::SpawnComponent spawn{};
@@ -215,6 +228,7 @@ int main(int argc, char* argv[]) {
     Engine engine(1024, 768, "Test Engine");
 
     // Load sounds
+
     // get sound manager
     auto& sounds = engine.GetSoundManager();
 
@@ -229,17 +243,13 @@ int main(int argc, char* argv[]) {
     auto& sprites = engine.GetSpriteManager();
     auto& entities = engine.GetEntityManager();
 
-    // register player sprite
+    // register player, star and digit sprites
     ECSEngine::SpriteID playerSprite = sprites.RegisterTexture(gResourcePath + "spritesheet-characters-default.png",
         {{0, 0}, 128, 128}
     );
-
-    // register star sprite
     ECSEngine::SpriteID starSprite = sprites.RegisterTexture(gResourcePath + "spritesheet-tiles-default.png",
         {{640, 320}, 64, 64}
     );
-
-    // register sprites for the score digits
     ECSEngine::SpriteID digitSprites[10];
 
     // load the digit sprites 
@@ -256,6 +266,7 @@ int main(int argc, char* argv[]) {
     LoadMap(engine, gResourcePath, "world.map");
 
 
+    // TODO: test spawner setup once EntityManager iteration is implemented by other group member
     // find the spawner created by the map
     for (const auto& entity : entities) {
         ECSEngine::EntityID id = entity.GetID();
@@ -265,7 +276,7 @@ int main(int argc, char* argv[]) {
             continue;
         }
 
-        // get spawner settings
+        // spawner settings
         auto& spawn = entities.GetComponent<ECSEngine::SpawnComponent>(id);
 
         // set star sprite and spawn timer
@@ -283,19 +294,19 @@ int main(int argc, char* argv[]) {
     playerLocation.loc = {736.0f, 480.0f};
     entities.AddComponent(playerID, playerLocation);
 
-    // world space allows camera to affect the players position on screen
+    // set players sprite and bounds
     ECSEngine::SpriteComponent playerSpriteComponent{};
     playerSpriteComponent.textureID = playerSprite;
     playerSpriteComponent.bounds = {{0, 0}, 48, 48};
     playerSpriteComponent.worldSpace = true;
     entities.AddComponent(playerID, playerSpriteComponent);
 
-    // movement stores velocity used to update the players position
+    // store players velocity so movement system can update the player
     ECSEngine::MovementComponent playerMovement{};
     playerMovement.velocity = {0, 0};
     entities.AddComponent(playerID, playerMovement);
 
-    // gravity and input systems use these components to update the player
+    // attatch gravity and input data to the player
     ECSEngine::GravityComponent playerGravity{ 
         playerID
     };
@@ -307,6 +318,7 @@ int main(int argc, char* argv[]) {
     entities.AddComponent(playerID, playerInput);
 
     // collision bounds define players physical area in the world
+    // players collision behavior
     ECSEngine::CollisionComponent playerCollision{};
     playerCollision.staticEntity = false;
     playerCollision.doesDamage = false;
@@ -414,7 +426,7 @@ int main(int argc, char* argv[]) {
 
     entities.AddComponent(starID, starSpriteComponent);
 
-    // configure the star as a collectible
+    // allow the player to collide with the test star
     ECSEngine::CollisionComponent starCollision{};
     starCollision.staticEntity = false;
     starCollision.doesDamage = false;
