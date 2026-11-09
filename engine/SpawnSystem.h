@@ -80,7 +80,7 @@ public:
 
             // give spawned stars different movement directions
             MovementComponent movement{};
-            movement.velocity = {static_cast<float>(std::rand() % 301 - 150), static_cast<float>(std::rand() % 301 - 150)};
+            movement.velocity = {static_cast<float>(std::rand() % 11 - 5), static_cast<float>(std::rand() % 11 - 5)};
             entities.template AddComponent<MovementComponent>(starID, movement);
 
             // use matching sprite and collision dimensions

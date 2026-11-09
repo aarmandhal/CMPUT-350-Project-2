@@ -306,9 +306,9 @@ int main(int argc, char* argv[]) {
     playerMovement.velocity = {0, 0};
     entities.AddComponent(playerID, playerMovement);
 
-    // attatch gravity and input data to the player
-    ECSEngine::GravityComponent playerGravity{ 
-        playerID
+    // apply downward gravity to the player
+    ECSEngine::GravityComponent playerGravity{
+        ECSEngine::Point2D(0.0f, 1.0f)
     };
     entities.AddComponent(playerID, playerGravity);
 
