@@ -29,9 +29,6 @@ public:
         auto& windowManager = engine->GetWindowManager();
         auto window = windowManager.GetWindow();
 
-        // clear previous frame
-        window->clear(sf::Color::Black);
-
         // go through all valid entities
         for (const auto& entity : entities) {
             EntityID id = entity.GetID();
@@ -66,8 +63,6 @@ public:
             // draw sprite
             window->draw(sprite);
         }
-
-        window->display();
 
         return kContinue; 
     }
