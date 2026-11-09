@@ -78,4 +78,6 @@ public:
 private:
     int mFrameCount = 0;
     int mFacing = 1;
+}
+
 }  // namespace ECSEngine
