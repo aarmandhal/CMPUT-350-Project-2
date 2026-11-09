@@ -26,7 +26,10 @@ SpriteID SpriteManager::RegisterTexture(const std::string& texturePath, const Re
     // return the index of the new sprite
     return mSprites.size() - 1;
 
+}
 
+sf::Sprite& SpriteManager::GetSprite(SpriteID id) {
+    return mSprites.at(id);
 }
 
 }  // namespace ECSEngine
