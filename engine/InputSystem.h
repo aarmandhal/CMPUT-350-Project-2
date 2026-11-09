@@ -69,15 +69,15 @@ public:
             if (movement.velocity.y > 0 && pushingIntoWall) {
                 bool justStarted = movement.velocity.y > kWallSlideMaxFallSpeed;
                 movement.velocity.y = std::min(movement.velocity.y, kWallSlideMaxFallSpeed);
-                if (justStarted) engine->GetSoundManager().GetSound("wall_slide").play();
+                if (justStarted) engine->GetSoundManager().GetSound("wall").play();
             }
-            return kContinue;
         }
-    };
+        return kContinue;
+    }
 
 private:
     int mFrameCount = 0;
     int mFacing = 1;
-}
+};
 
 }  // namespace ECSEngine
