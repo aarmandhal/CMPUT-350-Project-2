@@ -297,7 +297,7 @@ int main(int argc, char* argv[]) {
     // set players sprite and bounds
     ECSEngine::SpriteComponent playerSpriteComponent{};
     playerSpriteComponent.textureID = playerSprite;
-    playerSpriteComponent.bounds = {{0, 0}, 48, 48};
+    playerSpriteComponent.bounds = {{-24, -48}, 96, 96};
     playerSpriteComponent.worldSpace = true;
     entities.AddComponent(playerID, playerSpriteComponent);
 
