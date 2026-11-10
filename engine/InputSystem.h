@@ -12,6 +12,7 @@ const float kAirRunAcceleration = 4;
 const float kDashInterval = 25;
 const float kWallSlideMaxFallSpeed = 5;
 const float kJumpReleaseDamping = 0.5f;
+const float kFastFallAcceleration = 0.5f;
 
 template <typename... Components>
 class InputSystem : public System<Components...> {
@@ -57,6 +58,11 @@ public:
                 movement.velocity.y = -kJumpVelocity;
             } else if (!input.keydown[Key::Z] && movement.velocity.y < 0) {
                 movement.velocity.y *= kJumpReleaseDamping;
+            }
+
+            // increase falling speed when holding down
+            if (input.keydown[Key::Down] && movement.velocity.y > 0) {
+                movement.velocity.y += kFastFallAcceleration;
             }
 
             if (justPressed(Key::C) && (mFrameCount - input.lastDash) >= kDashInterval) {
