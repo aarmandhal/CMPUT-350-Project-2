@@ -89,7 +89,10 @@ public:
 
     template <typename T>
     void RemoveComponent(EntityID entity) {
-        GetComponentStorage<T>().mValid[entity] = false;
+        auto& storage = GetComponentStorage<T>();
+        if (entity < storage.mValid.size()) {
+            storage.mValid[entity] = false;
+        }
     }
 
     template <typename T>
