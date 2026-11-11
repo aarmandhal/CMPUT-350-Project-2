@@ -1,8 +1,7 @@
 #include <fstream>
-
-#include <unordered_map>
 #include <sstream>
 #include <stdexcept>
+#include <unordered_map>
 
 #include "CameraSystem.h"
 #include "CollisionComponent.h"
@@ -33,8 +32,6 @@ std::string gResourcePath = "../assets/";
 using Engine = ECSEngine::ECSEngine<COMPONENTS>;
 
 void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
-    
-
     std::ifstream mapFile(path + file);
 
     if (!mapFile.is_open()) {
@@ -64,14 +61,12 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
     firstLine >> word >> dictionaryType;
 
     // only the two supported map formats are valid
-    if (word != "dictionary" ||
-        (dictionaryType != 1 && dictionaryType != 2)) {
+    if (word != "dictionary" || (dictionaryType != 1 && dictionaryType != 2)) {
         throw std::runtime_error("Invalid map dictionary");
     }
 
     // read tile dictionary until the map header is reached
     while (std::getline(mapFile, line)) {
-
         if (line.empty()) {
             continue;
         }
@@ -94,9 +89,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
         ECSEngine::Rect sourceRect = {{x, y}, width, height};
 
         // register tile texture with the sprite manager and get the ID
-        auto spriteID = sprites.RegisterTexture(
-            path + textureFile, sourceRect
-        );
+        auto spriteID = sprites.RegisterTexture(path + textureFile, sourceRect);
 
         TileInfo tile{};
         tile.spriteID = spriteID;
@@ -108,9 +101,7 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
 
             tileLine >> boxX >> boxY >> boxWidth >> boxHeight;
 
-            tile.collisionBounds = {
-                {boxX, boxY}, boxWidth, boxHeight
-            };
+            tile.collisionBounds = {{boxX, boxY}, boxWidth, boxHeight};
         }
 
         dictionary[symbol] = tile;
@@ -123,23 +114,20 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
     int gridWidth, gridHeight;
 
     // read map settings from the map header line
-    mapSettings >> mapWord >> originWord >> originX >> originY >> tileWord >> tileWidth >> tileHeight >> sizeWord >> gridWidth >> gridHeight;
+    mapSettings >> mapWord >> originWord >> originX >> originY >> tileWord >> tileWidth >>
+        tileHeight >> sizeWord >> gridWidth >> gridHeight;
 
     // validate map settings
     // check whether the map settings from world and sky are valid before creating the map entities
-    if (mapWord != "map" || originWord != "origin" ||
-        tileWord != "tile" || sizeWord != "size" ||
-        tileWidth <= 0 || tileHeight <= 0 ||
-        gridWidth <= 0 || gridHeight <= 0) {
+    if (mapWord != "map" || originWord != "origin" || tileWord != "tile" || sizeWord != "size" ||
+        tileWidth <= 0 || tileHeight <= 0 || gridWidth <= 0 || gridHeight <= 0) {
         throw std::runtime_error("Invalid map settings");
     }
 
     // loop responsible for converting the map file into entities with components
     for (int row = 0; row < gridHeight; row++) {
-
         // read each row of the map and check its length
-        if (!std::getline(mapFile, line) ||
-            line.size() != static_cast<size_t>(gridWidth)) {
+        if (!std::getline(mapFile, line) || line.size() != static_cast<size_t>(gridWidth)) {
             throw std::runtime_error("Invalid map row");
         }
 
@@ -183,27 +171,24 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
             // background tiles have no collision components
             // add collision component to the entity only if the tile has collision bounds
             if (tile->second.hasCollision) {
-
                 ECSEngine::CollisionComponent collision{};
 
                 collision.staticEntity = true;
-                collision.doesDamage = false;
+                collision.doesDamage = (symbol == 'x');
                 collision.collisionBox = tile->second.collisionBounds;
 
-                // initialize the previous collision box in world coordinates for collision detection 
-                collision.previousCollisionBox = {
-                    {tileX + collision.collisionBox.topLeft.x,
-                     tileY + collision.collisionBox.topLeft.y},
-                    collision.collisionBox.width,
-                    collision.collisionBox.height
-                };
+                // initialize the previous collision box in world coordinates for collision
+                // detection
+                collision.previousCollisionBox = {{tileX + collision.collisionBox.topLeft.x,
+                                                   tileY + collision.collisionBox.topLeft.y},
+                                                  collision.collisionBox.width,
+                                                  collision.collisionBox.height};
 
                 entities.AddComponent(id, collision);
             }
 
             // spawner behavior is added if the tile symbole is S
             if (symbol == 'S') {
-
                 ECSEngine::SpawnComponent spawn{};
 
                 spawn.entityID = id;
@@ -214,7 +199,6 @@ void LoadMap(Engine& engine, const std::string& path, const std::string& file) {
             }
         }
     }
-
 }
 
 int main(int argc, char* argv[]) {
@@ -244,19 +228,16 @@ int main(int argc, char* argv[]) {
     auto& entities = engine.GetEntityManager();
 
     // register player, star and digit sprites
-    ECSEngine::SpriteID playerSprite = sprites.RegisterTexture(gResourcePath + "spritesheet-characters-default.png",
-        {{0, 0}, 128, 128}
-    );
-    ECSEngine::SpriteID starSprite = sprites.RegisterTexture(gResourcePath + "spritesheet-tiles-default.png",
-        {{640, 320}, 64, 64}
-    );
+    ECSEngine::SpriteID playerSprite = sprites.RegisterTexture(
+        gResourcePath + "spritesheet-characters-default.png", {{0, 0}, 128, 128});
+    ECSEngine::SpriteID starSprite = sprites.RegisterTexture(
+        gResourcePath + "spritesheet-tiles-default.png", {{640, 320}, 64, 64});
     ECSEngine::SpriteID digitSprites[10];
 
-    // load the digit sprites 
+    // load the digit sprites
     for (int i = 0; i < 10; i++) {
         digitSprites[i] = sprites.RegisterTexture(gResourcePath + "spritesheet-tiles-default.png",
-            {{832.0f, 832.0f - i * 64.0f}, 64.0f, 64.0f}
-        );
+                                                  {{832.0f, 832.0f - i * 64.0f}, 64.0f, 64.0f});
     }
 
     // load background first
@@ -264,7 +245,6 @@ int main(int argc, char* argv[]) {
 
     // load gameplay world
     LoadMap(engine, gResourcePath, "world.map");
-
 
     // TODO: test spawner setup once EntityManager iteration is implemented by other group member
     // find the spawner created by the map
@@ -307,14 +287,10 @@ int main(int argc, char* argv[]) {
     entities.AddComponent(playerID, playerMovement);
 
     // apply downward gravity to the player
-    ECSEngine::GravityComponent playerGravity{
-        ECSEngine::Point2D(0.0f, 1.0f)
-    };
+    ECSEngine::GravityComponent playerGravity{ECSEngine::Point2D(0.0f, 1.0f)};
     entities.AddComponent(playerID, playerGravity);
 
-    ECSEngine::InputComponent playerInput{
-        playerID
-    };
+    ECSEngine::InputComponent playerInput{playerID};
     entities.AddComponent(playerID, playerInput);
 
     // collision bounds define players physical area in the world
@@ -325,9 +301,7 @@ int main(int argc, char* argv[]) {
     playerCollision.collisionBox = {{0, 0}, 48, 48};
 
     // previous bounds help detect collisions between movement updates
-    playerCollision.previousCollisionBox = {
-        playerLocation.loc, 48, 48
-    };
+    playerCollision.previousCollisionBox = {playerLocation.loc, 48, 48};
 
     entities.AddComponent(playerID, playerCollision);
 
@@ -433,16 +407,13 @@ int main(int argc, char* argv[]) {
 
     // keep collision bounds consistent with the sprite
     starCollision.collisionBox = {{0, 0}, 32, 32};
-    starCollision.previousCollisionBox = {
-        starLocation.loc, 32, 32
-    };
+    starCollision.previousCollisionBox = {starLocation.loc, 32, 32};
 
     entities.AddComponent(starID, starCollision);
 
     // allow the movement system to update the star
     ECSEngine::MovementComponent starMovement{};
     entities.AddComponent(starID, starMovement);
-
 
     // Add all systems
     auto& sm = engine.GetSystemManager();

@@ -157,6 +157,13 @@ private:
         if (stat.doesDamage && em.template HasComponent<RespawnComponent>(dynamicId)) {
             dynLoc.loc = em.template GetComponent<RespawnComponent>(dynamicId).loc;
             vel = Point2D(0.f, 0.f);
+            if (isPlayer) {
+                auto& input = em.template GetComponent<InputComponent>(dynamicId);
+                input.dashFramesLeft = 0;
+                input.wallJumpLock = 0;
+            }
+            if (em.template HasComponent<GravityComponent>(dynamicId))
+                em.template GetComponent<GravityComponent>(dynamicId).disabledTimer = 0;
             return true;
         }
 
