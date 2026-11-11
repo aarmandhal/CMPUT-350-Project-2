@@ -17,7 +17,16 @@ class SpriteManager {
 public:
     SpriteManager() = default;
     ~SpriteManager() = default;
+
+    // loads a texture if it has not already been loaded
+    // creates a sprite and returns its id for later access
+    // the manager owns the texture and sprite
     [[nodiscard]] SpriteID RegisterTexture(const std::string& texturePath, const Rect& sourceRect);
+
+    // returns a reference to a sprite stored in this manager
+    // the reference is valid until the sprite vector reallocates
+    // do not keep the reference when registering more sprites
+    // the reference also becomes invalid when the manager is destroyed
     sf::Sprite& GetSprite(SpriteID id);
 
 private:

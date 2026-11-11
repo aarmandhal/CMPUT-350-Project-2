@@ -13,7 +13,16 @@ class SoundManager {
 public:
     SoundManager() = default;
     ~SoundManager() = default;
+
+    // loads and stores a sound using the given name
+    // the manager owns the sound buffer and playable sound
+    // registering an existing name does nothing
     void RegisterSound(const std::string& soundPath, const std::string& soundName);
+
+    // returns a reference to a sound stored in this manager
+    // the reference is valid until the sound vector reallocates
+    // do not keep the reference when registering more sounds
+    // the reference also becomes invalid when the manager is destroyed
     sf::Sound& GetSound(const std::string& soundName);
 
 private:
