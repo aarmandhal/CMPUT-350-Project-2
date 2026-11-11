@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdlib>
+#include <cmath>
 
 #include "SystemManager.h"
 #include "EntityManager.h"
@@ -66,6 +67,10 @@ public:
             auto textureID = spawn.spawnTextureID;
             auto spawnPosition = location.loc;
 
+            // give spawned stars different movement directions
+            const float kStarSpeed = 4.f;
+            float angle = static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX) * 6.2831853f;
+
             EntityID starID = entities.CreateEntity(spawnType);
 
             LocationComponent starLocation{};
@@ -80,7 +85,8 @@ public:
 
             // give spawned stars different movement directions
             MovementComponent movement{};
-            movement.velocity = {static_cast<float>(std::rand() % 11 - 5), static_cast<float>(std::rand() % 11 - 5)};
+            movement.velocity = {kStarSpeed * std::cos(angle), kStarSpeed * std::sin(angle)};            
+            
             entities.template AddComponent<MovementComponent>(starID, movement);
 
             // use matching sprite and collision dimensions
