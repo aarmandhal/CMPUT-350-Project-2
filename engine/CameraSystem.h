@@ -2,18 +2,15 @@
 
 #include <unordered_map>
 
+#include "CameraComponent.h"
+#include "EntityManager.h"
 #include "LocationComponent.h"
 #include "MathUtil.h"
 #include "SpriteComponent.h"
 #include "SystemManager.h"
+#include "WindowManager.h"
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
-
-#include "CameraComponent.h"
-#include "EntityManager.h"
-#include "LocationComponent.h"
-#include "SystemManager.h"
-#include "WindowManager.h"
 
 namespace ECSEngine {
 
@@ -25,9 +22,7 @@ public:
         return name;
     }
 
-    tSystemReturn Run(EngineView<Components...>* engine) override { 
-
-
+    tSystemReturn Run(EngineView<Components...>* engine) override {
         // managers needed for the camera
         auto& entities = engine->GetEntityManager();
         auto& windowManager = engine->GetWindowManager();
@@ -73,18 +68,20 @@ public:
             if (playerScreen.x < hardLeft) {
                 camera.position.x += (playerScreen.x - hardLeft) * camera.worldUnitsPerPixel;
             }
-            
+
             else if (playerScreen.x > hardRight) {
                 camera.position.x += (playerScreen.x - hardRight) * camera.worldUnitsPerPixel;
             }
 
             // move slowly if the player is outside the dead zone
             else if (playerScreen.x < softLeft) {
-                camera.position.x += (playerScreen.x - softLeft) * camera.worldUnitsPerPixel * camera.speed;
+                camera.position.x +=
+                    (playerScreen.x - softLeft) * camera.worldUnitsPerPixel * camera.speed;
             }
 
             else if (playerScreen.x > softRight) {
-                camera.position.x += (playerScreen.x - softRight) * camera.worldUnitsPerPixel * camera.speed;
+                camera.position.x +=
+                    (playerScreen.x - softRight) * camera.worldUnitsPerPixel * camera.speed;
             }
 
             // start with the updated camera position
@@ -95,14 +92,13 @@ public:
                 auto& shake = entities.template GetComponent<CameraShake>(id);
 
                 if (shake.frameLimit > 0) {
-
                     // apply shake offset
                     finalPosition.x += shake.offset.x;
                     finalPosition.y += shake.offset.y;
 
                     // reduce shake over time
-                    shake.offset.x *= 0.8f;
-                    shake.offset.y *= 0.8f;
+                    shake.offset.x *= -0.8f;
+                    shake.offset.y *= -0.8f;
                     shake.frameLimit--;
                 }
             }
@@ -110,8 +106,7 @@ public:
             windowManager.SetWorldCenter(finalPosition);
         }
 
-        return kContinue; 
-    
+        return kContinue;
     }
 };
 
