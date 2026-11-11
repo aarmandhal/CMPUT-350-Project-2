@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 #include <vector>
 
 #include "CameraComponent.h"
@@ -20,6 +21,9 @@ const float kShakeImpactThreshold = 20.f;
 const int kShakeFrameLimit = 10;
 const float kShakeMagnitudeScale = 0.25f;
 const float kStarRestitution = 0.6f;
+const float kWallRestitution = 0.8f;
+const float kLandSoundSpeed = 4.f;
+const float kSideEpsilon = 0.01f;
 
 template <typename... Components>
 class CollisionSystem : public System<Components...> {

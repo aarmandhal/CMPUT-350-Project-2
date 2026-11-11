@@ -7,7 +7,9 @@ namespace ECSEngine {
 WindowManager::WindowManager(unsigned int width, unsigned int height, const std::string& title)
     : mWindow(std::make_shared<sf::RenderWindow>(sf::VideoMode({width, height}), title)),
       mWorldCenter(0, 0),
-      mWorldUnitsPerPixel(1.f) {}
+      mWorldUnitsPerPixel(1.f) {
+    mWindow->setFramerateLimit(60);
+}
 
 std::shared_ptr<sf::RenderWindow> WindowManager::GetWindow() const { return mWindow; }
 
