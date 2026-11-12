@@ -26,7 +26,7 @@ const float kWallJumpVelocityY = 22;
 const int kWallJumpLockFrames = 10;
 
 // Dash
-const float kDashVelocity = 35;
+const float kDashVelocity = 50;
 const int kDashFrames = 6;
 const int kDashInterval = 60;
 

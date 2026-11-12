@@ -18,7 +18,9 @@
 
 namespace ECSEngine {
 
-const float kShakeImpactThreshold = 20.f;
+const float kShakeLandThreshold = 20.f;
+const float kShakeWallThreshold = 14.f;
+const float kMaxShakeMagnitude = 10.f;
 const int kShakeFrameLimit = 10;
 const float kShakeMagnitudeScale = 0.25f;
 const float kStarRestitution = 0.6f;
@@ -38,7 +40,6 @@ public:
 
     tSystemReturn Run(EngineView<Components...>* engine) override {
         auto& em = engine->GetEntityManager();
-        std::vector<EntityID> collidables;
         mSounds = &engine->GetSoundManager();
 
         // Split collidable objects into static and dynamic
@@ -223,10 +224,11 @@ private:
                 break;
         }
 
-        if (isPlayer && impactSpeed > kShakeImpactThreshold) {
+        float threshold = (shakeDir.y != 0.f) ? kShakeLandThreshold : kShakeWallThreshold;
+        if (isPlayer && impactSpeed > threshold) {
             EntityID cameraEntity = FindCameraEntity(em);
             if (cameraEntity != EM::kNullComponent) {
-                float mag = impactSpeed * kShakeMagnitudeScale;
+                float mag = std::min(impactSpeed * kShakeMagnitudeScale, kMaxShakeMagnitude);
                 em.template AddComponent<CameraShake>(
                     cameraEntity,
                     CameraShake{kShakeFrameLimit, Point2D(shakeDir.x * mag, shakeDir.y * mag)});

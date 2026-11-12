@@ -218,7 +218,7 @@ int main(int argc, char* argv[]) {
 
     // register sounds for player actions
     sounds.RegisterSound(gResourcePath + "sfx_jump.ogg", "jump");
-    sounds.RegisterSound(gResourcePath + "sfx_jump-high.ogg", "wall");
+    sounds.RegisterSound(gResourcePath + "footstep_snow_001.ogg", "wall");
     sounds.RegisterSound(gResourcePath + "footstep_grass_003.ogg", "land");
     sounds.RegisterSound(gResourcePath + "sfx_gem.ogg", "collect");
 
