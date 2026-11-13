@@ -2,6 +2,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unordered_map>
+#include <memory>
 
 #include "CameraSystem.h"
 #include "CollisionComponent.h"
@@ -22,6 +23,13 @@
 #include "SpriteComponent.h"
 #include "SpriteManager.h"
 #include "SpriteSystem.h"
+#include "CameraComponent.h"
+#include "CameraFollowerComponent.h"
+#include "CameraShakeComponent.h"
+#include "MovementComponent.h"
+#include "GravityComponent.h"
+#include "RespawnComponent.h"
+
 
 std::string gResourcePath = "../assets/";
 #define COMPONENTS                                                                             \
