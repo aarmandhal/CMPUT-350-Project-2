@@ -21,6 +21,8 @@
 
 namespace ECSEngine {
 
+// what systems are given each frame: access to the four resource managers
+// systems use these instead of holding the managers themselves
 template <typename... Components>
 class EngineView {
 public:
@@ -30,12 +32,14 @@ public:
     virtual WindowManager& GetWindowManager() = 0;
 };
 
+// the engine owns every manager and runs the main game loop
 template <typename... Components>
 class ECSEngine : public EngineView<Components...> {
 public:
     ECSEngine(unsigned int width, unsigned int height, const std::string& name);
     ~ECSEngine();
 
+    // runs the game loop until the window closes or a system asks to exit
     void Run();
 
     SoundManager& GetSoundManager() override { return mSoundManager; }
@@ -49,7 +53,10 @@ public:
     SystemManager<Components...>& GetSystemManager() { return mSystemManager; }
 
 private:
+    // reads SFML events and updates every InputComponent; false means the window closed
     bool ProcessEvents();
+
+    // draws collision boxes when debug mode is on (toggled with F1)
     void DebugDraw();
 
     EntityManager<Components...> mEntityManager;
@@ -63,6 +70,7 @@ private:
     int debug;
 };
 
+// create the window and start with the game not running and debug drawing off
 template <typename... Components>
 ECSEngine<Components...>::ECSEngine(unsigned int width, unsigned int height,
                                     const std::string& name)
@@ -75,10 +83,19 @@ template <typename... Components>
 void ECSEngine<Components...>::Run() {
     auto window = mWindowManager.GetWindow();
     running = true;
+
+    // one loop = one frame (capped at 60 fps by the WindowManager)
     while (running && window->isOpen()) {
+        // handle keyboard / window events first, stop if the window was closed
         if (!ProcessEvents()) break;
+
+        // clear last frame's drawing
         window->clear(sf::Color::Black);
+
+        // run every system in order; stop if one of them returns kExit
         if (!mSystemManager.Run(this)) running = false;
+
+        // draw debug boxes on top of the game, then show the finished frame
         DebugDraw();
         window->display();
     }
@@ -86,6 +103,8 @@ void ECSEngine<Components...>::Run() {
 
 template <typename... Components>
 bool ECSEngine<Components...>::ProcessEvents() {
+    // save this frame's keys as "last frame" before reading new events,
+    // so InputSystem can tell when a key was just pressed
     for (auto& entity : mEntityManager) {
         EntityID id = entity.GetID();
         if (mEntityManager.template HasComponent<InputComponent>(id)) {
@@ -93,13 +112,18 @@ bool ECSEngine<Components...>::ProcessEvents() {
             input.lastKeydown = input.keydown;
         }
     }
+
+    // handle every event SFML has queued since last frame
     auto window = mWindowManager.GetWindow();
     while (const std::optional<sf::Event> event = window->pollEvent()) {
+        // window closed -> stop the game
         if (event->is<sf::Event::Closed>()) {
             window->close();
             return false;
         }
 
+        // work out which key changed and whether it went down or up
+        // anything other than a key press / release is ignored
         bool isDown;
         sf::Keyboard::Scancode code;
         if (const auto* pressed = event->getIf<sf::Event::KeyPressed>()) {
@@ -111,10 +135,15 @@ bool ECSEngine<Components...>::ProcessEvents() {
         } else {
             continue;
         }
+
+        // unknown keys have no slot in the bitset
         if (code == sf::Keyboard::Scancode::Unknown) continue;
 
+        // F1 turns debug drawing on / off (!debug flips 0 to 1 and 1 to 0)
         if (isDown && code == sf::Keyboard::Scancode::F1) debug = !debug;
 
+        // record the key state in every entity that takes input
+        // the scancode is used as the index into the keydown bitset
         for (auto& entity : mEntityManager) {
             EntityID id = entity.GetID();
             if (mEntityManager.template HasComponent<InputComponent>(id)) {
@@ -128,11 +157,15 @@ bool ECSEngine<Components...>::ProcessEvents() {
 
 template <typename... Components>
 void ECSEngine<Components...>::DebugDraw() {
+    // debug drawing is off
     if (debug <= 0) return;
+
+    // draw a red outline around every collision box
     for (auto& entity : mEntityManager) {
         EntityID id = entity.GetID();
         if (mEntityManager.template HasComponent<CollisionComponent>(id) &&
             mEntityManager.template HasComponent<LocationComponent>(id)) {
+            // collisionBox is relative to the entity, so add the location for world coordinates
             Rect box = mEntityManager.template GetComponent<CollisionComponent>(id).collisionBox;
             const auto& loc = mEntityManager.template GetComponent<LocationComponent>(id).loc;
             box.topLeft.x += loc.x;
