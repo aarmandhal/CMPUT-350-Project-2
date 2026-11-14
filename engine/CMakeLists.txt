@@ -37,6 +37,11 @@ set(ECS_COMPONENT_FILES
     ScoreComponent.h
     SpawnComponent.h
     SpriteComponent.h
+    MovementComponent.h
+    GravityComponent.h
+    RespawnComponent.h
+    CameraFollowerComponent.h
+    CameraShakeComponent.h
 )
 
 set(ECS_SYSTEM_FILES

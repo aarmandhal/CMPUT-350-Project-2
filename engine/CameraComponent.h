@@ -9,6 +9,8 @@
 #include "SystemManager.h"
 #include <SFML/Graphics/Sprite.hpp>
 #include <SFML/Graphics/Texture.hpp>
+#include "CameraFollowerComponent.h"
+#include "CameraShakeComponent.h"
 
 namespace ECSEngine {
 
@@ -20,15 +22,6 @@ struct CameraComponent {
     Rect softExclusion;  // [screen coordinates] Area where the camera is allowed to go (but will
                          // scroll out)
     float speed;
-};
-
-struct CameraFollower {
-    EntityID entityID;  // The entity that this camera follows
-};
-
-struct CameraShake {
-    int frameLimit;
-    Point2D offset;
 };
 
 }  // namespace ECSEngine

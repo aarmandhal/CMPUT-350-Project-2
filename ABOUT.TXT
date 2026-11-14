@@ -1,0 +1,96 @@
+CMPUT 350 - Project #2 Part 1: ECS Engine and Platformer
+=========================================================
+
+Team Members
+------------
+Aarman Dhal  (aarmandhal)
+Bader        (Bader)
+
+Building and Running
+--------------------
+  cmake -S . -B build
+  cmake --build build
+  ./build/platformer/platformer -path ./assets/
+
+
+Controls
+--------
+  Left / Right      run
+  Z                 jump (hold for a higher jump, release early for a short hop)
+  Z on a wall       hop up the same wall (up to 2 hops before touching the ground)
+  Away arrow + Z    wall jump: jump off the wall you are sliding on
+  Down              fall faster
+  C                 dash in the facing direction (once per second)
+  F1                show / hide collision boxes (debug)
+
+Implementation Notes
+--------------------
+Engine structure
+  - EntityManager<Components...> keeps one ComponentStorage<T> per component
+    type, indexed by EntityID. A valid-flag vector marks which entities and
+    components exist. IDs of removed entities go on a free list and are
+    reused. The entity iterator skips removed entities.
+  - Systems run in this order each frame:
+      CollisionLateSystem (the spec's CollisionSystemUpdate), Input, Gravity,
+      Movement, Collision, Score, Camera, Sprite, Spawn
+  - The window is capped at 60 fps. All physics values are per frame.
+
+Resource managers
+  - SpriteManager and SoundManager own all textures, sprites, buffers and
+    sounds. Components store only an ID or name, never the resource itself.
+  - References returned by GetSprite / GetSound are valid only until another
+    resource is registered or the manager is destroyed. All resources are
+    registered at startup in main.cpp, so systems can safely call the getter
+    each frame. They must not keep the reference.
+  - WindowManager::GetWindow returns a shared_ptr, so the window stays
+    alive for as long as a caller holds it.
+
+Collision
+  - CollisionLateSystem saves each box's world position at the start of the
+    frame. CollisionSystem compares the saved box with the new position to
+    find which side was hit, and falls back to the smallest overlap if that
+    is unclear.
+  - When the player overlaps several tiles, the largest overlap is resolved
+    first. This stops the player catching on the seams between tiles.
+  - Stars bounce off walls (restitution 0.8) and off each other (0.6).
+    Two stars only swap velocity when they are moving toward each other.
+  - Spike tiles ('x') send the player back to the respawn point and clear
+    any dash, wall-jump lock and gravity timer.
+  - Hitting a solid object shakes the screen. The strength depends on the
+    impact speed (capped), lasts 10 frames and alternates direction as it
+    fades.
+
+Movement
+  - Gravity is stronger when falling (x1.6) than when rising (x1.0), and
+    much weaker while sliding down a wall (x0.3).
+  - Wall jumping: Z on its own hops up the same wall (limited to 2 hops so
+    the level still needs the dash). Z with the arrow pointing away from
+    the wall jumps off. A 6-frame grace window still allows a wall jump
+    just after leaving the wall.
+  - The dash turns gravity off for its 6 frames and ends early if it hits a
+    wall.
+
+Camera
+  - The camera's y-position is fixed. Along x there are three zones:
+    outer 10% of the screen (hard follow), 10-30% (smooth follow), and the
+    middle 40% (dead zone, no movement).
+
+Who Did What
+------------
+Aarman Dhal
+  - EntityManager (storage, free list, iterator, RemoveEntity/RemoveComponent)
+  - ECSEngine game loop, event processing, F1 debug drawing
+  - WindowManager (world/window conversions, camera, frame cap)
+  - InputSystem, GravitySystem, MovementSystem, CollisionSystem,
+    CollisionLateSystem
+  - Wall slide, wall jump, same-wall hops, dash, spike respawn, screen shake
+  - CMake setup for the lab machines (bundled SFML)
+
+Bader
+  - SpriteManager and SoundManager
+  - SpriteSystem, SpawnSystem (random-direction stars), ScoreSystem,
+    CameraSystem
+  - platformer/main.cpp: map loading, entity and component setup, sounds,
+    score display
+  - Splitting components into separate header files, EngineTest
+
