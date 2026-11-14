@@ -23,6 +23,8 @@ namespace ECSEngine {
 
 // what systems are given each frame: access to the four resource managers
 // systems use these instead of holding the managers themselves
+// access to the engine's managers; the references are valid for the lifetime of the engine
+// (the managers are members of ECSEngine, so they are never moved or replaced)
 template <typename... Components>
 class EngineView {
 public:
